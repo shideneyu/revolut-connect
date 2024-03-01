@@ -1,7 +1,7 @@
 require "jwt"
 
 module Revolut
-  class Auth < BaseResource
+  class Auth < Resource
     class NotAuthorizedError < StandardError
       def initialize
         super(
@@ -39,10 +39,10 @@ module Revolut
       # @param auth_json [Hash] The JSON object containing authentication data.
       # @return [void]
       def load(auth_json)
-        @access_token = auth["access_token"]
-        @token_type = auth["token_type"]
-        @expires_at = Time.now.to_i + auth["expires_in"]
-        @refresh_token = auth["refresh_token"]
+        @access_token = auth_json["access_token"]
+        @token_type = auth_json["token_type"]
+        @expires_at = Time.now.to_i + auth_json["expires_in"]
+        @refresh_token = auth_json["refresh_token"]
       end
 
       # Returns the access token too access the Revolut API.
@@ -67,6 +67,23 @@ module Revolut
       # - false otherwise
       def expired?
         expires_at && Time.now.to_i >= expires_at
+      end
+
+      # Loads authentication information from environment variable REVOLUT_AUTH_JSON.
+      #
+      # If the access token is not already set and the environment variable REVOLUT_AUTH_JSON is present,
+      # this method loads the JSON data from the environment variable and calls the load method to set the authentication information.
+      #
+      # Example:
+      #   auth.load_from_env
+      #
+      # @return [void]
+      def load_from_env
+        env_json = ENV["REVOLUT_AUTH_JSON"]
+
+        return unless @access_token.nil? && env_json
+
+        load(JSON.parse(env_json))
       end
 
       private

@@ -5,8 +5,11 @@ require "faraday"
 require_relative "revolut/version"
 require_relative "revolut/http"
 require_relative "revolut/client"
-require_relative "revolut/resources/base_resource"
+require_relative "revolut/resources/resource"
 Dir[File.join(__dir__, "revolut", "resources", "*.rb")].each { |file| require file }
+
+# Load the authentication information from the environment variable REVOLUT_AUTH_JSON right away if possible.
+Revolut::Auth.load_from_env
 
 module Revolut
   class Error < StandardError; end

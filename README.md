@@ -57,13 +57,19 @@ revolut_auth = Revolut::Auth.exchange(authorization_code: "{CODE YOU COPIED IN P
 6) This will return a `Revolut::Auth` object with the access token in it. It's highly recommended that you persist this information somewhere so that it can later be loaded without needing to go through this code exchange process again:
 
 ```rb
-stored_auth = store(revolut_auth.to_json) # Persist this somewhere (database, redis, etc.). Remember to encrypt it if you persist it.
+auth_to_persist = revolut_auth.to_json # Persist this somewhere (database, redis, etc.). Remember to encrypt it if you persist it.
 ```
 
 And then, when you need to load the auth again:
 
 ```rb
-Revolut::Auth.load(stored_auth)
+Revolut::Auth.load(auth_to_persist)
+```
+
+You can also store this json in an environment variable and the gem will auto load it:
+
+```
+REVOLUT_AUTH_JSON={auth_to_persist}
 ```
 
 :tada: You're all set to start using the API.
