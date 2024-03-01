@@ -12,8 +12,8 @@ module Revolut
     end
 
     class << self
-      attr_accessor :token_type, :expires_at, :refresh_token
-      attr_writer :access_token
+      attr_accessor :token_type, :refresh_token
+      attr_writer :access_token, :expires_at
 
       # Generates the authorization URL for the Revolut API.
       # Use this URI to redirect the user to Revolut's authorization page
@@ -60,13 +60,34 @@ module Revolut
         @access_token
       end
 
+      # Refreshes the access token if it has expired or if force is set to true.
+      #
+      # @param force [Boolean] Whether to force refresh the access token.
+      # @return [Revolut::Resources::Auth] The refreshed authentication object.
+      def refresh(force: false)
+        return unless expired? || force
+
+        new(http_client.refresh_access_token(refresh_token:).body).tap do |refreshed_auth|
+          @access_token = refreshed_auth.access_token
+          @token_type = refreshed_auth.token_type
+          @expires_at = Time.now.to_i + refreshed_auth.expires_in
+        end
+      end
+
+      # Returns the expiration date and time of the authentication token.
+      #
+      # @return [DateTime] The expiration date and time.
+      def expires_at
+        Time.at(@expires_at).utc.to_datetime
+      end
+
       # Checks if the access_token has expired.
       #
       # Returns:
       # - true if the access_token has expired
       # - false otherwise
       def expired?
-        expires_at && Time.now.to_i >= expires_at
+        expires_at && Time.now.to_i >= @expires_at
       end
 
       # Loads authentication information from environment variable REVOLUT_AUTH_JSON.
@@ -87,16 +108,6 @@ module Revolut
       end
 
       private
-
-      def refresh
-        return unless expired?
-
-        new(http_client.refresh_access_token(refresh_token:).body).tap do |refreshed_auth|
-          @access_token = refreshed_auth.access_token
-          @token_type = refreshed_auth.token_type
-          @expires_at = Time.now.to_i + refreshed_auth.expires_in
-        end
-      end
 
       def authorize_base_uri
         Revolut.sandbox? ?

@@ -31,5 +31,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "jwt", ">= 1"
   spec.add_dependency "faraday", ">= 1"
-  spec.add_dependency "faraday_middleware", ">= 1"
+  spec.add_dependency "faraday-retry", ">= 1"
 end

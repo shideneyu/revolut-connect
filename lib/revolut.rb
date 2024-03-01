@@ -2,6 +2,7 @@
 
 require "faraday"
 
+require_relative "revolut/middlewares/catch_error"
 require_relative "revolut/version"
 require_relative "revolut/http"
 require_relative "revolut/client"
@@ -15,6 +16,8 @@ module Revolut
   class Error < StandardError; end
 
   class ConfigurationError < Error; end
+
+  class NotImplementedError < Error; end
 
   class Configuration
     attr_accessor :request_timeout, :global_headers, :environment

@@ -11,12 +11,6 @@ require "revolut"
 
 require "irb"
 
-def catch_faraday(&block)
-  block.call
-rescue Faraday::Error => e
-  puts e.inspect
-
-  raise e
-end
+ENV["CONSOLE"] = ENV.fetch("CONSOLE", "true")
 
 IRB.start(__FILE__)
