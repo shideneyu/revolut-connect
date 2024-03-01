@@ -1,7 +1,7 @@
 require "jwt"
 
 module Revolut
-  class Auth < BaseModel
+  class Auth < BaseResource
     class NotAuthorizedError < StandardError
       def initialize
         super(
@@ -15,21 +15,41 @@ module Revolut
       attr_accessor :token_type, :expires_at, :refresh_token
       attr_writer :access_token
 
+      # Generates the authorization URL for the Revolut API.
       # Use this URI to redirect the user to Revolut's authorization page
       # to authorize your app to access her business account.
+      #
+      # @return [String] The authorization URL.
       def authorize_url
         "#{authorize_base_uri}?client_id=#{Revolut.config.client_id}&redirect_uri=#{Revolut.config.authorize_redirect_uri}&response_type=code#authorise"
       end
 
-      def retrieve(authorization_code:)
-        new(http_client.get_access_token(authorization_code:).body).tap do |authorization|
-          @access_token = authorization.access_token
-          @token_type = authorization.token_type
-          @expires_at = Time.now.to_i + authorization.expires_in
-          @refresh_token = authorization.refresh_token
-        end
+      # Exchanges the authorization code for an access token.
+      #
+      # @param authorization_code [String] The authorization code to retrieve the access token.
+      # @return [Auth] The newly created Revolut::Auth object.
+      def exchange(authorization_code:)
+        auth_json = http_client.get_access_token(authorization_code:).body
+        load(auth_json)
+        new(auth_json)
       end
 
+      # Loads authentication data from a JSON object.
+      #
+      # @param auth_json [Hash] The JSON object containing authentication data.
+      # @return [void]
+      def load(auth_json)
+        @access_token = auth["access_token"]
+        @token_type = auth["token_type"]
+        @expires_at = Time.now.to_i + auth["expires_in"]
+        @refresh_token = auth["refresh_token"]
+      end
+
+      # Returns the access token too access the Revolut API.
+      # Raises Revolut::Auth::NotAuthorizedError if the access token is not set.
+      # Refreshes the access token if it has expired.
+      #
+      # @return [String] The access token.
       def access_token
         # If there's no token set in the authorization class, it means that we're trying to
         # access the API without having gone through the authorization process.
@@ -40,6 +60,11 @@ module Revolut
         @access_token
       end
 
+      # Checks if the access_token has expired.
+      #
+      # Returns:
+      # - true if the access_token has expired
+      # - false otherwise
       def expired?
         expires_at && Time.now.to_i >= expires_at
       end

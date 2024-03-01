@@ -1,5 +1,5 @@
 module Revolut
-  class BaseModel
+  class BaseResource
     class << self
       def http_client
         @http_client ||= Revolut::Client.instance
@@ -32,9 +32,9 @@ module Revolut
           instance_variable_set(:"@#{key}", value)
         else
           coerced_value = if value.is_a?(Hash)
-            Revolut::BaseModel.new(value)
+            Revolut::BaseResource.new(value)
           elsif value.is_a?(Array)
-            value.map { |v| Revolut::BaseModel.new(v) }
+            value.map { |v| Revolut::BaseResource.new(v) }
           else
             value
           end

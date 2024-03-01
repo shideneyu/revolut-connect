@@ -5,8 +5,8 @@ require "faraday"
 require_relative "revolut/version"
 require_relative "revolut/http"
 require_relative "revolut/client"
-require_relative "revolut/models/base_model"
-Dir[File.join(__dir__, "revolut", "models", "*.rb")].each { |file| require file }
+require_relative "revolut/resources/base_resource"
+Dir[File.join(__dir__, "revolut", "resources", "*.rb")].each { |file| require file }
 
 module Revolut
   class Error < StandardError; end
@@ -27,7 +27,7 @@ module Revolut
       @global_headers = {}
       @client_id = ENV["REVOLUT_CLIENT_ID"]
       @signing_key = ENV["REVOLUT_SIGNING_KEY"].gsub("\\n", "\n")
-      @iss = ENV["REVOLUT_ISS"]
+      @iss = ENV.fetch("REVOLUT_ISS", "example.com")
       @authorize_redirect_uri = ENV["REVOLUT_AUTHORIZE_REDIRECT_URI"]
       @environment = ENV.fetch("REVOLUT_ENVIRONMENT", DEFAULT_ENVIRONMENT).to_sym
       @base_uri = (environment == :sandbox) ? "https://sandbox-b2b.revolut.com/api/1.0/" : "https://b2b.revolut.com/api/1.0/"
