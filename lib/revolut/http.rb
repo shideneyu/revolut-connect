@@ -66,12 +66,25 @@ module Revolut
 
     private
 
-    def conn(content_type = :json)
+    def conn(content_type = :json, auth: true)
       Faraday.new do |f|
         f.options[:timeout] = request_timeout
+
+        # Request middlewares
         f.request content_type
+        f.request :retry, { # Retries a request after refreshing the token if we get an UnauthorizedError
+          max: 1,
+          exceptions: [Faraday::UnauthorizedError],
+          retry_block: ->(env, _options, _retry_count, _exception) {
+            Revolut::Auth.refresh(force: true)
+            env.request_headers = env.request_headers.merge("Authorization" => "Bearer #{Revolut::Auth.access_token}")
+          }
+        }
+        f.request :authorization, "Bearer", -> { Revolut::Auth.access_token }
+
+        # Response middlewares
         f.response :json
-        f.response :raise_error
+        f.response ENV["CONSOLE"] ? :catch_error : :raise_error
       end
     end
 
@@ -80,9 +93,7 @@ module Revolut
     end
 
     def all_headers(request_headers = {})
-      {
-        "Authorization" => "Bearer #{access_token}"
-      }.merge(global_headers).merge(request_headers)
+      global_headers.merge(request_headers)
     end
 
     def client_assertion

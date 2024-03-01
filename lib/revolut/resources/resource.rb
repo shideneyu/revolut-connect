@@ -1,20 +1,93 @@
 module Revolut
   class Resource
     class << self
-      def http_client
-        @http_client ||= Revolut::Client.instance
+      def create(**attrs)
+        check_not_allowed
+
+        response = http_client.post("/#{resource_name}", data: attrs)
+
+        body = response.body
+
+        return body.map(&self) if body.is_a?(Array)
+
+        new(body)
       end
 
-      def skip_coertion_for(attrs = [])
-        @skip_coertion_for ||= attrs
+      def retrieve(id)
+        check_not_allowed
+
+        response = http_client.get("/#{resource_name}/#{id}")
+
+        new(response.body)
+      end
+
+      def update(id, **attrs)
+        check_not_allowed
+
+        response = http_client.put("/#{resource_name}/#{id}", data: attrs)
+
+        new(response.body)
+      end
+
+      def list(**)
+        check_not_allowed
+
+        response = http_client.get("/#{resources_name}", **)
+
+        response.body.map(&self)
+      end
+
+      def delete(id)
+        check_not_allowed
+
+        http_client.delete("/#{resource_name}/#{id}")
+
+        true
       end
 
       def to_proc
         ->(attrs) { new(attrs) }
       end
 
-      def not_allowed_to(attrs = [])
+      def skip_coertion_for(attrs = [])
+        @skip_coertion_for ||= attrs
+      end
+
+      def coerce_with(**attrs)
+        @coerce_with ||= attrs
+      end
+
+      protected
+
+      def http_client
+        @http_client ||= Revolut::Client.instance
+      end
+
+      def resource_name
+        resources_name
+      end
+
+      def resources_name
+        raise Revolut::NotImplementedError, "Implement #resources_name in subclass"
+      end
+
+      def not_allowed_to(*attrs)
         @not_allowed_to ||= attrs
+      end
+
+      def shallow
+        only
+      end
+
+      def only(*attrs)
+        @only ||= attrs
+      end
+
+      private
+
+      def check_not_allowed
+        method = caller(1..1).first.match(/`(\w+)'/)[1].to_sym
+        raise Revolut::Error, "`#{method}` is not allowed on this resource" if not_allowed_to.include?(method) || only.any? && !only.include?(method)
       end
     end
 
@@ -31,10 +104,13 @@ module Revolut
         if self.class.skip_coertion_for.include?(key.to_sym)
           instance_variable_set(:"@#{key}", value)
         else
+          coerce_class = self.class.coerce_with[key.to_sym] || Revolut::Resource
           coerced_value = if value.is_a?(Hash)
-            Revolut::Resource.new(value)
+            coerce_class.new(value)
           elsif value.is_a?(Array)
-            value.map { |v| Revolut::Resource.new(v) }
+            value.map do |v|
+              v.is_a?(Hash) ? coerce_class.new(v) : v
+            end
           else
             value
           end

@@ -1,6 +1,19 @@
 # frozen_string_literal: true
 
-require "revolut/connect"
+require "bundler/setup"
+require "webmock/rspec"
+require "revolut"
+Bundler.require(:default, :development, :test)
+
+if ENV["COVERAGE_DIR"]
+  require "simplecov"
+  require "simplecov-cobertura"
+  SimpleCov.coverage_dir(File.join(ENV["COVERAGE_DIR"]))
+  SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
+  SimpleCov.start
+end
+
+Dir[File.expand_path("spec/support/**/*.rb")].sort.each { |f| require f }
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
