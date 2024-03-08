@@ -10,6 +10,7 @@ RSpec.describe Revolut::Client do
         signing_key: "fake_signing_key",
         iss: "example.com",
         authorize_redirect_uri: "https://example.com",
+        api_version: "1.0",
         base_uri: "https://sandbox-b2b.revolut.com/api/1.0/",
         environment: :sandbox,
         request_timeout: 120,
@@ -47,8 +48,9 @@ RSpec.describe Revolut::Client do
       allow(Revolut::Auth).to receive(:refresh).with(force: true)
       allow(Revolut::Auth).to receive(:access_token).and_return("fake_access_token")
       expect(options).to match(
-        max: 1,
         exceptions: [Faraday::UnauthorizedError],
+        # We're only retrying on Faraday::UnauthorizedError, so we should be good about retrying non idempotent methods like post and patch.
+        methods: Faraday::Retry::Middleware::IDEMPOTENT_METHODS + %i[post patch],
         retry_block: anything # We're going to test this separately
       )
       options[:retry_block].call(env:, options: {}, retry_count: 0, exception: Faraday::UnauthorizedError.new, will_retry_in: 0)
@@ -229,6 +231,22 @@ RSpec.describe Revolut::Client do
 
     it "returns the response" do
       expect(response.body).to eq_as_json token_refresh_response
+    end
+  end
+
+  describe "base_uri" do
+    context "when the environment is sandbox" do
+      it "returns the sandbox base_uri" do
+        expect(client.base_uri).to eq "https://sandbox-b2b.revolut.com/api/1.0/"
+      end
+    end
+
+    context "when the environment is production" do
+      let(:client) { Revolut::Client.new(environment: :production) }
+
+      it "returns the production base_uri" do
+        expect(client.base_uri).to eq "https://b2b.revolut.com/api/1.0/"
+      end
     end
   end
 end

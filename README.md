@@ -5,7 +5,7 @@
 |:-:|:-:|
 | [![Tests](https://github.com/moraki-finance/revolut-connect/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/moraki-finance/revolut-connect/actions/workflows/main.yml)  |  [![Codecov Coverage](https://codecov.io/github/moraki-finance/revolut-connect/graph/badge.svg?token=SKTT14JJGV)](https://codecov.io/github/moraki-finance/revolut-connect) |
 
-A lightweight API client for Revolut featuring authentication, permission scopes, token expiration and automatic renewal.
+A lightweight API client for Revolut featuring authentication, permission scopes, token expiration and automatic renewal, webhooks, webhook events, and much more!
 
 Revolut docs: <https://developer.revolut.com/>
 
@@ -22,6 +22,7 @@ _:warning: For now this connector only supports the [Business API](https://devel
 - `Payment`
 - `Transaction`
 - `TransferReason`
+- `Webhook`
 
 ## :construction: Roadmap
 
@@ -34,7 +35,6 @@ _:warning: For now this connector only supports the [Business API](https://devel
 - `Simulation` resource
 - `TeamMember` resource
 - `Transfer` resource
-- `Webhooks` resource
 
 ### Merchants API
 
@@ -160,6 +160,10 @@ Revolut.configure do |config|
   # Optional: The JWT for an already exchanged token.
   # Used to preload an existing auth token so that you don't have to exchange / renew it again.
   config.auth_json = ENV["REVOLUT_AUTH_JSON"]
+
+  # Optional: The revolut api version used. Generally used to hit the webhooks API as it requires api_version 2.0.
+  # Default: "1.0".
+  config.api_version = ENV["REVOLUT_API_VERSION"]
 end
 ```
 
