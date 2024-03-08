@@ -297,6 +297,49 @@ rotated = Revolut::Webhook.rotate_signing_secret(webhook.id)
 failed_events = Revolut::Webhook.failed_events(webhook.id)
 ```
 
+#### Webhooks in web applications (Rails example)
+
+In order to start listening to stripe webhook events you'll first have to create a webhook in your revolut instance so that revolut knows that it needs to start pushing events to a certain URL:
+
+```rb
+webhook = Revolut::Webhook.create(url: "http://{your web app webhook URL}")
+puts webhook.signing_secret
+```
+
+You can then copy the signing secret and store it in the env variables as follows:
+
+```text
+REVOLUT_WEBHOOK_SECRET={copy your signing secret here}
+```
+
+Then, in the revolut webhook controller, you can do the following to coerce revolut events (rails example):
+
+```rb
+class Webhooks::RevolutController < ApplicationController
+
+  def run
+    coerced = Revolut::WebhookEvent.construct_from(request, ENV["REVOLUT_WEBHOOK_SECRET"])
+    case coerced.event
+      when "TransactionStateChanged"
+        # handle event
+      when "PayoutLinkCreated"
+        # handle event
+      ...
+    end
+  rescue Revolut::SignatureVerificationError => e
+    # Do something when the signature verification fails
+    head :bad_request
+  end
+
+end
+```
+
+The rails routes would look something like this:
+
+```rb
+post "webhooks/revolut", to: "webhooks/revolut#run"
+```
+
 ## Development
 
 You can use `bin/console` to access an interactive console. This will preload environment variables from a `.env` file.
