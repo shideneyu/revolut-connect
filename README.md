@@ -299,7 +299,7 @@ failed_events = Revolut::Webhook.failed_events(webhook.id)
 
 #### Webhooks in web applications (Rails example)
 
-In order to start listening to stripe webhook events you'll first have to create a webhook in your revolut instance so that revolut knows that it needs to start pushing events to a certain URL:
+In order to start listening to revolut webhook events you'll first have to create a webhook in your revolut instance so that revolut knows that it needs to start pushing events to a certain URL:
 
 ```rb
 webhook = Revolut::Webhook.create(url: "http://{your web app webhook URL}")
