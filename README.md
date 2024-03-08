@@ -247,6 +247,39 @@ transaction = Revolut::Payment.retrieve(payment.id)
 deleted = Revolut::Payment.delete(transaction.id)
 ```
 
+#### Webhooks
+
+<https://developer.revolut.com/docs/business/webhooks-v-2>
+
+```rb
+# Create a webhook
+webhook = Revolut::Webhook.create(
+  url: "https://www.example.com",
+  events: [
+    "TransactionCreated",
+    "PayoutLinkCreated"
+  ]
+)
+
+# List webhooks
+webhooks = Revolut::Webhook.list
+
+# Retrieve a webhook
+webhook = Revolut::Webhook.retrieve(webhook.id)
+
+# Update a webhook
+webhook = Revolut::Webhook.update(webhook.id, url: "https://www.example.com/")
+
+# Delete a webhook
+deleted = Revolut::Webhook.delete(webhook.id)
+
+# Rotate webhook secret
+rotated = Revolut::Webhook.rotate_signing_secret(webhook.id)
+
+# Retrieve list of failing events
+failed_events = Revolut::Webhook.failed_events(webhook.id)
+```
+
 ## Development
 
 You can use `bin/console` to access an interactive console. This will preload environment variables from a `.env` file.
