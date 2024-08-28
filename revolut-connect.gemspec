@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Revolut API connector for Ruby. This gem is not official and is not supported by Revolut. Use at your own risk."
   spec.homepage = "https://github.com/moraki-finance/revolut-connect"
   spec.license = "MIT"
-  spec.required_ruby_version = Gem::Requirement.new(">= 3.0.0")
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.7.3")
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/moraki-finance/revolut-connect"
